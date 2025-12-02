@@ -1,0 +1,1246 @@
+<html lang="en-GB">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saber: Scaling Zero-Shot Reference-to-Video Generation</title>
+    <meta name="description"
+        content="We bypass the bottleneck of explicit reference image-video-text triplets by introducing Saber, a scalable zero-shot framework that requires no explicit R2V data.">
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <meta name="robots" content="all">
+    <meta content="en_EN" property="og:locale">
+    <meta content="website" property="og:type">
+    <meta content="https://shikun.io/projects/clarity" property="og:url">
+    <meta content="Saber" property="og:title">
+    <meta
+        content="A scalable zero-shot framework for reference-to-video generation trained exclusively on video-text pairs."
+        property="og:description">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@your_twitter_id">
+    <meta name="twitter:description" content="Saber: Scaling Zero-Shot Reference-to-Video Generation">
+    <meta name="twitter:image:src" content="assets/figures/clarity.png">
+
+    <link rel="stylesheet" type="text/css" media="all" href="assets/stylesheets/main_free.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="clarity/clarity.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/foundation.min.css">
+    <link href="assets/fontawesome-free-6.6.0-web/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/img-comparison-slider@8/dist/styles.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/img-comparison-slider@8/dist/index.js"></script>
+    <script src="assets/scripts/navbar.js"></script> <!-- Comment to remove table of content. -->
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+            "HTML-CSS": {
+              scale: 95,
+              fonts: ["Gyre-Pagella"],
+              imageFont: null,
+              undefinedFamily: "'Arial Unicode MS', cmbright"
+            },
+            tex2jax: {
+                inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+                processEscapes: true
+              }
+          });
+    </script>
+    <script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+        </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        /* Custom styles for first content container with video background */
+        div.container.blog#first-content {
+            padding-top: 0vh !important;
+            position: relative;
+            overflow: hidden;
+            min-height: 100vh;
+        }
+
+        /* Video background */
+        div.container.blog#first-content #background-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+
+        /* Overlay to improve text readability */
+        div.container.blog#first-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(20, 20, 30, 0.7);
+            z-index: 1;
+        }
+
+        /* Content container floating above video */
+        div.container.blog#first-content .blog-title {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 5vh 2vw;
+        }
+
+        div.container.blog#first-content .blog-title .blog-intro {
+            width: 75vw;
+            padding: 5vh 6vw !important;
+        }
+
+        /* Custom styles for title */
+        div.container.blog#first-content div.blog-title.no-cover h1.title {
+            font-size: 52px !important;
+            font-weight: 700 !important;
+            padding-top: 0 !important;
+            padding-bottom: 2vh !important;
+            color: #ffffff;
+            text-shadow: 2px 2px 12px rgba(0, 0, 0, 0.8), 4px 4px 20px rgba(0, 0, 0, 0.6);
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: visible;
+        }
+
+        /* Custom styles for author */
+        div.container.blog#first-content div.blog-title .blog-intro p.author {
+            font-size: 72% !important;
+            padding: 0 !important;
+            line-height: 1.8 !important;
+            margin-bottom: 0.5vh !important;
+            color: #e0e0e0;
+            text-shadow: 1px 1px 8px rgba(0, 0, 0, 0.8), 2px 2px 12px rgba(0, 0, 0, 0.6);
+        }
+
+        div.container.blog#first-content div.blog-title .blog-intro p.author a {
+            font-size: inherit !important;
+            text-decoration: none;
+            color: #e0e0e0;
+            transition: color 0.3s ease;
+            text-shadow: inherit;
+        }
+
+        div.container.blog#first-content div.blog-title .blog-intro p.author a:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        div.container.blog#first-content div.blog-title .blog-intro p.author:last-of-type {
+            margin-bottom: 1.5vh !important;
+        }
+
+        /* Custom styles for abstract */
+        div.container.blog#first-content div.blog-title .blog-intro p.abstract {
+            text-align: justify;
+            font-size: 78% !important;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            -ms-hyphens: auto;
+            word-break: break-word;
+            padding: 0 !important;
+            margin-bottom: 2.5vh !important;
+            color: #d0d0d0;
+        }
+
+        /* Custom styles for buttons */
+        div.container.blog#first-content div.blog-title .blog-intro .info {
+            padding-top: 0.5vh !important;
+            padding-bottom: 0 !important;
+            margin: 0 !important;
+        }
+
+        div.container.blog#first-content div.blog-title .blog-intro .info .button {
+            background-color: rgba(40, 40, 50, 0.9) !important;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        div.container.blog#first-content div.blog-title .blog-intro .info .button:hover {
+            background-color: rgba(60, 60, 70, 1) !important;
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Custom styles for Introduction section */
+        div.container.blog.main.first {
+            margin-top: 1vh !important;
+        }
+
+        div.container.blog.main.first h1 {
+            font-size: 30px !important;
+            padding-top: 0 !important;
+        }
+
+        div.container.blog.main.first p.text {
+            font-size: 85% !important;
+            text-align: justify !important;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            -ms-hyphens: auto;
+            word-break: break-word;
+            padding: 0.5vh 0 !important;
+        }
+
+        div.container.blog.main.first ul {
+            padding-left: 1vw !important;
+        }
+
+        div.container.blog.main.first ul li p.text {
+            font-size: 85% !important;
+            text-align: justify !important;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            -ms-hyphens: auto;
+            word-break: break-word;
+            padding: 0.5vh 0 !important;
+        }
+
+        /* Custom styles for Method section */
+        div.container.blog.main#method-section {
+            margin-top: 1vh !important;
+        }
+
+        div.container.blog.main#method-section h1 {
+            font-size: 30px !important;
+            padding-top: 0 !important;
+        }
+
+        div.container.blog.main#method-section h2 {
+            font-size: 20px !important;
+            font-weight: 600 !important;
+            padding: 1vh 0 0.5vh 0 !important;
+        }
+
+        div.container.blog.main#method-section p.text {
+            font-size: 85% !important;
+            text-align: justify !important;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            -ms-hyphens: auto;
+            word-break: break-word;
+            padding: 0.5vh 0 !important;
+        }
+
+        /* Custom styles for Teaser Video section */
+        div.container.blog.main#teaser-video-section {
+            margin-top: 1vh !important;
+        }
+
+        div.container.blog.main#teaser-video-section h1 {
+            font-size: 30px !important;
+            padding-top: 0 !important;
+        }
+
+        /* Custom styles for all sections after Method */
+        div.container.blog.main:not(.first):not(#method-section) {
+            margin-top: 1vh !important;
+        }
+
+        div.container.blog.main:not(.first):not(#method-section) h1 {
+            font-size: 30px !important;
+            padding-top: 0 !important;
+        }
+
+        div.container.blog.main:not(.first):not(#method-section) h2 {
+            font-size: 20px !important;
+            font-weight: 600 !important;
+            padding: 1vh 0 0.5vh 0 !important;
+        }
+
+        div.container.blog.main:not(.first):not(#method-section) p.text {
+            font-size: 85% !important;
+            text-align: justify !important;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            -ms-hyphens: auto;
+            word-break: break-word;
+            padding: 0.5vh 0 !important;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Title Page with Video Background -->
+    <div class="container blog" id="first-content">
+        <!-- Background Video -->
+        <video id="background-video" autoplay muted loop playsinline>
+            <source src="assets/videos/Saber.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+
+        <!-- Content floating above video -->
+        <div class="blog-title no-cover">
+            <div class="blog-intro">
+                <div>
+                    <h1 class="title">Scaling Zero-Shot Reference-to-Video Generation</h1>
+                    <p class="author">
+                        <a href="https://sites.google.com/view/zijian-zhou/home">Zijian Zhou</a><sup>1,2</sup>, <a
+                            href="https://shikun.io">Shikun Liu</a><sup>1</sup>, <a
+                            href="https://haozheliu-st.github.io">Haozhe Liu</a><sup>1</sup>, <a
+                            href="http://haonanqiu.com">Haonan
+                            Qiu</a><sup>1</sup>, <a href="https://zhaochongan.github.io">Zhaochong An</a><sup>1</sup>,
+                        <a href="https://cs.uwaterloo.ca/~w2ren/">Weiming
+                            Ren</a><sup>1</sup>, <a href="https://johanan528.github.io">Zhiheng Liu</a><sup>1</sup>,
+                        <a href="https://xk-huang.github.io">Xiaoke Huang</a><sup>1</sup>,<br>
+                        <a href="https://kamwoh.github.io">Kam Woh Ng</a><sup>1</sup>, <a
+                            href="https://scholar.google.com/citations?user=wKjXhH8AAAAJ">Tian Xie</a><sup>1</sup>, <a
+                            href="https://brandonhan.uk">Xiao
+                            Han</a><sup>1</sup>, <a href="https://yrcong.github.io">Yuren Cong</a><sup>1</sup>, <a
+                            href="https://hangligit.github.io">Hang
+                            Li</a><sup>1</sup>, <a href="https://www.linkedin.com/in/chuyan-nicole-zhu/">Chuyan
+                            Zhu</a><sup>1</sup>, <a href="https://www.linkedin.com/in/adityapatel1/">Aditya
+                            Patel</a><sup>1</sup>, <a href="https://scholar.google.com/citations?user=MeS5d4gAAAAJ">Tao
+                            Xiang</a><sup>1</sup>, <a href="https://senhe.github.io">Sen
+                            He</a><sup>1</sup>
+                    </p>
+                    <p class="author" style="padding-top: 0px;">
+                        <sup>1</sup> Meta AI &nbsp;&nbsp;&nbsp; <sup>2</sup> King's College London
+                    </p>
+
+                    <!-- Using FontAwesome Free -->
+                    <div class="info">
+                        <div>
+                            <a href="https://arxiv.org" class="button icon"> Paper <i
+                                    class="fa-solid fa-book-open"></i></a> &nbsp;&nbsp;
+                            <a href="https://github.com" class="button icon">Code <i class="fa-solid fa-code"></i></a>
+                            &nbsp;&nbsp;
+                            <a href="https://www.microsoft.com/en-gb/microsoft-365/powerpoint"
+                                class="button icon">Slides <i class="fa-regular fa-file-powerpoint"></i></a>
+                            &nbsp;&nbsp;
+                            <a href="https://huggingface.co/spaces/" class="button icon">Demo <i
+                                    class="fa-solid fa-laptop-code"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="container blog main first" id="blog-main" style="background-color: #ffffff;">
+        <h1>Introduction</h1>
+        <p class='text'>
+            Reference-to-video (R2V) generation aims to synthesize videos that align with text prompts while preserving
+            the subject identity from reference images.
+            However, current methods are hindered by reliance on explicit R2V datasets containing triplets of reference
+            images, videos, and text prompts—a process that is costly, difficult to scale, and restricts generalization
+            to unseen subject categories.
+        </p>
+
+        <p class='text'>
+            We introduce <b>Saber</b>, a scalable zero-shot framework that bypasses this data bottleneck.
+            Trained exclusively on video-text pairs, Saber employs a masked training strategy where randomly sampled and
+            partially masked video frames serve as references, compelling the model to learn identity-consistent
+            representations without explicit R2V data.
+            A tailored attention mechanism guided by attention masks directs the model to focus on reference-aware
+            features while suppressing background noise.
+            Spatial mask augmentations further mitigate copy-paste artifacts common in reference-to-video generation.
+        </p>
+
+        <p class='text'>
+            Saber naturally supports a varying number of reference images and multiple views of the same subject,
+            enabling richer multi-subject customization.
+            On the OpenS2V-Eval benchmark, it consistently outperforms models explicitly trained on R2V data,
+            demonstrating strong zero-shot generalization and scalability.
+        </p>
+    </div>
+
+    <div class="container blog main gray" id="method-section" style="background-color: #f5f5f5;">
+        <h1>Method</h1>
+        <p class="text">
+            Our goal is to train a diffusion model capable of generating videos that preserve the identity and
+            appearance of subjects in given reference images while following the provided text prompt.
+            Unlike previous methods that rely on costly reference image-video-text triplets, <b>Saber achieves R2V
+                capabilities using only video-text pairs</b>—the same data paradigm used for text-to-video (T2V) and
+            image-to-video (I2V) training.
+        </p>
+
+        <p class="text">
+            Our core idea is to simulate the R2V task by replacing explicitly collected reference images with
+            <b>randomly masked frames</b> during training.
+            This masked training strategy is supported by two key components: (i) mask augmentations designed to
+            mitigate copy-paste artifacts, and (ii) a tailored attention mechanism that guides the model to focus on
+            relevant reference features.
+        </p>
+
+        <h2>Masked Frames as Reference</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2vw; align-items: start; padding: 1vh 0;">
+            <div>
+                <p class="text">
+                    Instead of relying on pre-collected reference images with limited subject diversity, we use
+                    <b>randomly
+                        masked frames as dynamic substitutes</b> during training.
+                    This strategy naturally introduces highly diverse reference samples, allowing the model to learn
+                    more
+                    effective subject integration and achieve stronger generalization.
+                </p>
+                <p class="text">
+                    For each reference, we randomly sample a frame from the video and apply a <b>mask generator</b> to
+                    produce
+                    diverse binary masks with controllable foreground area ratios.
+                    To mitigate copy-paste artifacts, we apply <b>mask augmentation</b>—random affine transformations
+                    (rotation,
+                    scaling, shear, translation, flip) to both the image and mask—disrupting spatial correspondence
+                    between
+                    masked references and video frames.
+                </p>
+            </div>
+            <div>
+                <img src="assets/figures/mask_frames.png" alt="Masked Frames as Reference"
+                    style="width: 100%; height: auto;">
+                <p class="caption" style="text-align: left; padding-top: 1vh;">
+                    <b>Masked reference generation.</b> Given a video, the mask generator produces diverse random masks
+                    (ellipse, Fourier blob, polygon, etc.), which are then applied to randomly sampled video frames with
+                    spatial augmentations (rotation, scaling, shear, translation, flip).
+                </p>
+            </div>
+        </div>
+
+        <h2>Model Design</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2vw; align-items: start; padding: 1vh 0;">
+            <div>
+                <p class="text">
+                    We adopt a simple yet effective architecture that concatenates reference images along the temporal
+                    dimension
+                    at the end of target video frames in latent space.
+                    The model manages interaction between target video latents and reference latents through a tailored
+                    <b>attention mechanism</b> in each transformer block.
+                </p>
+                <p class="text">
+                    <b>Input Format:</b> The masked frames are encoded into latent space and concatenated with the noisy
+                    video
+                    latents along the temporal dimension.
+                    Reference latents remain noise-free to preserve accurate conditioning, while binary masks indicate
+                    reference
+                    regions in the attention mechanism.
+                </p>
+                <p class="text">
+                    <b>Attention Mechanism:</b> In self-attention, video and reference parts interact with each other,
+                    where
+                    attention masks ensure that only valid reference regions are attended.
+                    Cross-attention then incorporates text guidance, allowing video tokens to follow the text prompt
+                    while
+                    reference tokens learn semantic alignment under textual constraints.
+                </p>
+            </div>
+            <div>
+                <img src="assets/figures/model_design.png" alt="Model Design" style="width: 100%; height: auto;">
+                <p class="caption" style="text-align: left; padding-top: 1vh;">
+                    <b>Model design overview.</b> Masked frames serve as reference images and are concatenated to the
+                    video
+                    tokens in latent space. Self-attention enables interaction between video and reference tokens under
+                    the
+                    attention mask, while cross-attention incorporates text guidance for semantic alignment.
+                </p>
+            </div>
+        </div>
+
+        <h2>Zero-Shot Inference</h2>
+        <p class="text">
+            During inference, we use a pre-trained object segmenter to extract foreground subject masks from reference
+            images.
+            The model naturally handles both foreground subjects (with segmentation) and background scenes (without
+            segmentation), demonstrating remarkable flexibility.
+            Reference images are resized and padded to match the target video size while preserving aspect ratios, then
+            fed into the model following our input format.
+        </p>
+    </div>
+
+    <div class="container blog main" style="background-color: #ffffff;">
+        <h1>Visualization Results</h1>
+        <p class="text">
+            We conduct qualitative comparisons between Saber and other methods (Kling1.6, Phantom, VACE) across
+            various visual scenarios, demonstrating superior subject preservation and video quality.
+        </p>
+
+        <!-- Case 1 -->
+        <div style="margin: 3vh 0;">
+            <div
+                style="display: grid; grid-template-columns: auto 1fr; gap: 1.5vw; margin-bottom: 1vh; align-items: stretch;">
+                <!-- Left: Reference Image (smaller) -->
+                <div>
+                    <img src="assets/videos/4_Qualitative_Comparison_Videos/1_reference_image_1.png"
+                        alt="Reference Image" style="height: 150px; width: auto; display: block;">
+                </div>
+                <!-- Right: Text Prompt -->
+                <div style="display: flex;">
+                    <div style="padding: 2vh 0; display: flex; align-items: center; width: 100%;">
+                        <p style="font-size: 75%; line-height: 1.6; margin: 0;">The video features a man with a rugged
+                            beard, wearing a leather jacket, riding a vintage motorcycle along a desert highway. His
+                            expression is focused, eyes narrowed slightly against the wind, as the setting sun casts a
+                            warm glow over the landscape.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Videos Grid - Full Screen Width -->
+            <div style="width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%);">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1vw; padding: 0 2vw;">
+                    <!-- Kling -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/1_generated_video_kling.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Kling1.6</p>
+                        </div>
+                    </div>
+                    <!-- Phantom -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/1_generated_video_phantom.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Phantom</p>
+                        </div>
+                    </div>
+                    <!-- VACE -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/1_generated_video_vace.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">VACE</p>
+                        </div>
+                    </div>
+                    <!-- Saber (Ours) -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 2px solid #2a7d2e; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/1_generated_video_saber.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(42, 125, 46, 0.85); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Saber (Ours)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Case 2 -->
+        <div style="margin: 3vh 0;">
+            <div
+                style="display: grid; grid-template-columns: auto 1fr; gap: 1.5vw; margin-bottom: 1vh; align-items: stretch;">
+                <!-- Left: Reference Images (3 images in a row) -->
+                <div style="display: flex; gap: 8px; align-items: flex-start;">
+                    <img src="assets/videos/4_Qualitative_Comparison_Videos/2_reference_image_1.jpg"
+                        alt="Reference Image 1"
+                        style="height: 150px; width: auto; display: block; object-fit: contain;">
+                    <img src="assets/videos/4_Qualitative_Comparison_Videos/2_reference_image_2.jpg"
+                        alt="Reference Image 2"
+                        style="height: 150px; width: auto; display: block; object-fit: contain;">
+                    <img src="assets/videos/4_Qualitative_Comparison_Videos/2_reference_image_3.jpg"
+                        alt="Reference Image 3"
+                        style="height: 150px; width: auto; display: block; object-fit: contain;">
+                </div>
+                <!-- Right: Text Prompt -->
+                <div style="display: flex;">
+                    <div style="padding: 2vh 0; display: flex; align-items: center; width: 100%;">
+                        <p style="font-size: 75%; line-height: 1.6; margin: 0;">A woman with long, flowing black hair
+                            pulled back into a ponytail dances gracefully in a sunlit meadow. She is wearing a flowing
+                            dress that billows gently around her as she moves. The scene captures her mid-twirl,
+                            with the fabric of her dress swirling elegantly.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Videos Grid - Full Screen Width -->
+            <div style="width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%);">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1vw; padding: 0 2vw;">
+                    <!-- Kling -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/2_generated_video_kling.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Kling1.6</p>
+                        </div>
+                    </div>
+                    <!-- Phantom -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/2_generated_video_phantom.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Phantom</p>
+                        </div>
+                    </div>
+                    <!-- VACE -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/2_generated_video_vace.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">VACE</p>
+                        </div>
+                    </div>
+                    <!-- Saber (Ours) -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 2px solid #2a7d2e; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/2_generated_video_saber.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(42, 125, 46, 0.85); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Saber (Ours)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Case 3 -->
+        <div style="margin: 3vh 0;">
+            <div
+                style="display: grid; grid-template-columns: auto 1fr; gap: 1.5vw; margin-bottom: 1vh; align-items: stretch;">
+                <!-- Left: Reference Image (smaller) -->
+                <div>
+                    <img src="assets/videos/4_Qualitative_Comparison_Videos/3_reference_image_1.jpg"
+                        alt="Reference Image" style="height: 150px; width: auto; display: block;">
+                </div>
+                <!-- Right: Text Prompt -->
+                <div style="display: flex;">
+                    <div style="padding: 2vh 0; display: flex; align-items: center; width: 100%;">
+                        <p style="font-size: 75%; line-height: 1.6; margin: 0;">This video shows a peaceful morning
+                            scene at a cozy farmhouse. The camera slowly pans across the exterior, revealing the rustic
+                            charm of the wooden structure. As the camera moves, a dog is seen lying near the entrance,
+                            its tail wagging gently. The soft morning light creates long shadows, adding to the tranquil
+                            atmosphere.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Videos Grid - Full Screen Width -->
+            <div style="width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%);">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1vw; padding: 0 2vw;">
+                    <!-- Kling -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/3_generated_video_kling.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Kling1.6</p>
+                        </div>
+                    </div>
+                    <!-- Phantom -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/3_generated_video_phantom.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Phantom</p>
+                        </div>
+                    </div>
+                    <!-- VACE -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/3_generated_video_vace.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">VACE</p>
+                        </div>
+                    </div>
+                    <!-- Saber (Ours) -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 2px solid #2a7d2e; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/3_generated_video_saber.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(42, 125, 46, 0.85); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Saber (Ours)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Case 4 -->
+        <div style="margin: 3vh 0; padding-top: 1vh;">
+            <div
+                style="display: grid; grid-template-columns: auto 1fr; gap: 1.5vw; margin-bottom: 1vh; align-items: stretch;">
+                <!-- Left: Reference Images (3 images in a row) -->
+                <div style="display: flex; gap: 8px; align-items: flex-start;">
+                    <img src="assets/videos/4_Qualitative_Comparison_Videos/4_reference_image_1.jpg"
+                        alt="Reference Image 1" style="height: 100px; width: auto; display: block;">
+                    <img src="assets/videos/4_Qualitative_Comparison_Videos/4_reference_image_2.jpg"
+                        alt="Reference Image 2" style="height: 100px; width: auto; display: block;">
+                    <img src="assets/videos/4_Qualitative_Comparison_Videos/4_reference_image_3.jpg"
+                        alt="Reference Image 3" style="height: 100px; width: auto; display: block;">
+                </div>
+                <!-- Right: Text Prompt -->
+                <div style="display: flex;">
+                    <div style="padding: 2vh 0; display: flex; align-items: center; width: 100%;">
+                        <p style="font-size: 75%; line-height: 1.6; margin: 0;">The video shows a table setting with a
+                            floral cup, an ashtray and an open book, as a stream of tea is slowly poured into the cup.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Videos Grid - Full Screen Width -->
+            <div style="width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%);">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1vw; padding: 0 2vw;">
+                    <!-- Kling -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/4_generated_video_kling.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Kling1.6</p>
+                        </div>
+                    </div>
+                    <!-- Phantom -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/4_generated_video_phantom.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Phantom</p>
+                        </div>
+                    </div>
+                    <!-- VACE -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/4_generated_video_vace.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">VACE</p>
+                        </div>
+                    </div>
+                    <!-- Saber (Ours) -->
+                    <div style="position: relative;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 2px solid #2a7d2e; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/4_Qualitative_Comparison_Videos/4_generated_video_saber.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(42, 125, 46, 0.85); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Saber (Ours)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container blog main" style="background-color: #f5f5f5;">
+        <h1>Ablation Study</h1>
+
+        <h2>Effect of Masked Training</h2>
+        <p class="text">
+            We compare masked training with training on the OpenS2V-5M dataset using the same architecture. Masked
+            training improves the total score by +1.67%, indicating that it strengthens subject representation
+            learning and reduces overfitting to specific reference cues.
+        </p>
+
+        <h2>Effect of Mask Generator</h2>
+        <p class="text">
+            <b>Mask Type Diversity:</b> Using only ellipse, Fourier, or polygon masks reduces total score by 3.35%,
+            1.58%, and 1.42% respectively, whereas combining all types yields the best results. This shows that mask
+            diversity is crucial for effective masked training.
+        </p>
+
+        <p class="text">
+            <b>Foreground Area Ratio:</b> Fixing the foreground area ratio r to 0.3 leads to a 6.18% drop in total
+            score, indicating that restricting mask variation limits the model's generalization capability.
+        </p>
+
+        <h2>Effect of Mask Augmentation</h2>
+        <p class="text">
+            Without mask augmentation, the model exhibits severe copy-paste artifacts, directly placing objects in
+            unrealistic positions. With augmentation (rotation, scaling, flipping, and shearing), objects are
+            naturally integrated into the scene, resulting in more realistic and coherent compositions. This
+            demonstrates that geometric diversity in masking is crucial for natural video generation.
+        </p>
+
+        <!-- Mask Augmentation Comparison -->
+        <div style="margin: 3vh 0;">
+            <div
+                style="display: grid; grid-template-columns: auto 1fr; gap: 1.5vw; margin-bottom: 1vh; align-items: stretch;">
+                <!-- Left: Reference Image -->
+                <div>
+                    <img src="assets/videos/5_Effect_of_the_Mask_Augmentation_Videos/1_reference_image_1.jpg"
+                        alt="Reference Image" style="height: 150px; width: auto; display: block;">
+                </div>
+                <!-- Right: Description -->
+                <div style="display: flex;">
+                    <div style="padding: 2vh 0; display: flex; align-items: center; width: 100%;">
+                        <p style="font-size: 75%; line-height: 1.6; margin: 0;">The video shows a t-shirt lies on a
+                            sunlit rock, its fabric fluttering in the breeze as the camera moves from close-up texture
+                            details to a wide view of the surrounding mountain trail. As the camera pulls back, the
+                            serene mountain landscape unfolds, with distant trees and a winding trail.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Videos Grid - Full Screen Width -->
+            <div style="width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%);">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1vw; padding: 0 2vw;">
+                    <!-- Without Mask Augmentation -->
+                    <div style="position: relative; grid-column: 2;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; background-color: #000;">
+                            <source
+                                src="assets/videos/5_Effect_of_the_Mask_Augmentation_Videos/1_generated_video_wo_mask_aug.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Without Mask
+                                Augmentation</p>
+                        </div>
+                    </div>
+                    <!-- With Mask Augmentation -->
+                    <div style="position: relative; grid-column: 3;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 2px solid #2a7d2e; border-radius: 4px; background-color: #000;">
+                            <source
+                                src="assets/videos/5_Effect_of_the_Mask_Augmentation_Videos/1_generated_video_w_mask_aug.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(42, 125, 46, 0.85); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">With Mask Augmentation
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2>Effect of Attention Mask</h2>
+        <p class="text">
+            Removing the attention mask introduces visible gray artifacts around subject regions, as the model fails
+            to correctly extract subjects from masked reference images. Incorporating the attention mask effectively
+            resolves these issues, leading to cleaner subject separation, smoother blending, and improved overall
+            video quality.
+        </p>
+
+        <!-- Case 1: Attention Mask Comparison -->
+        <div style="margin: 3vh 0;">
+            <div
+                style="display: grid; grid-template-columns: auto 1fr; gap: 1.5vw; margin-bottom: 1vh; align-items: stretch;">
+                <!-- Left: Reference Images (2 images in a row) -->
+                <div style="display: flex; gap: 8px; align-items: flex-start;">
+                    <img src="assets/videos/6_Effect_of_the_Attention_Mask_Videos/1_reference_image_1.jpg"
+                        alt="Reference Image 1"
+                        style="height: 150px; width: auto; display: block; object-fit: contain;">
+                    <img src="assets/videos/6_Effect_of_the_Attention_Mask_Videos/1_reference_image_1_processed.png"
+                        alt="Reference Image 1 Processed"
+                        style="height: 150px; width: auto; display: block; object-fit: contain;">
+                </div>
+                <!-- Right: Text Prompt -->
+                <div style="display: flex;">
+                    <div style="padding: 2vh 0; display: flex; align-items: center; width: 100%;">
+                        <p style="font-size: 75%; line-height: 1.6; margin: 0;">The video shows sunglasses rest on a
+                            sunlit beach towel, subtly shifting in the breeze as the camera moves from close-up details
+                            to a wide view of the sandy beach and distant waves. The camera pulls back, revealing the
+                            beach and the waves gently crashing in the distance.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Videos Grid - Full Screen Width -->
+            <div style="width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%);">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1vw; padding: 0 2vw;">
+                    <!-- Without Attention Mask -->
+                    <div style="position: relative; grid-column: 2;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; background-color: #000;">
+                            <source
+                                src="assets/videos/6_Effect_of_the_Attention_Mask_Videos/1_generated_video_wo_attn_mask.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Without Attention Mask
+                            </p>
+                        </div>
+                    </div>
+                    <!-- With Attention Mask -->
+                    <div style="position: relative; grid-column: 3;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 2px solid #2a7d2e; border-radius: 4px; background-color: #000;">
+                            <source
+                                src="assets/videos/6_Effect_of_the_Attention_Mask_Videos/1_generated_video_w_attn_mask.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(42, 125, 46, 0.85); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">With Attention Mask
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Case 2: Attention Mask Comparison -->
+        <div style="margin: 3vh 0;">
+            <div
+                style="display: grid; grid-template-columns: auto 1fr; gap: 1.5vw; margin-bottom: 1vh; align-items: stretch;">
+                <!-- Left: Reference Images (2 images in a row) -->
+                <div style="display: flex; gap: 8px; align-items: flex-start;">
+                    <img src="assets/videos/6_Effect_of_the_Attention_Mask_Videos/2_reference_image_1.jpg"
+                        alt="Reference Image 2"
+                        style="height: 150px; width: auto; display: block; object-fit: contain;">
+                    <img src="assets/videos/6_Effect_of_the_Attention_Mask_Videos/2_reference_image_1_processed.png"
+                        alt="Reference Image 2 Processed"
+                        style="height: 150px; width: auto; display: block; object-fit: contain;">
+                </div>
+                <!-- Right: Text Prompt -->
+                <div style="display: flex;">
+                    <div style="padding: 2vh 0; display: flex; align-items: center; width: 100%;">
+                        <p style="font-size: 75%; line-height: 1.6; margin: 0;">The video begins with a close-up of a
+                            clock ticks on a weathered train-station wall as the camera moves from its worn details to a
+                            wider view filled with distant train sounds and aged surroundings. The wall behind it shows
+                            signs of age, with chipped paint and faded bricks.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Videos Grid - Full Screen Width -->
+            <div style="width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%);">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1vw; padding: 0 2vw;">
+                    <!-- Without Attention Mask -->
+                    <div style="position: relative; grid-column: 2;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; background-color: #000;">
+                            <source
+                                src="assets/videos/6_Effect_of_the_Attention_Mask_Videos/2_generated_video_wo_attn_mask.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(0, 0, 0, 0.7); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Without Attention Mask
+                            </p>
+                        </div>
+                    </div>
+                    <!-- With Attention Mask -->
+                    <div style="position: relative; grid-column: 3;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 2px solid #2a7d2e; border-radius: 4px; background-color: #000;">
+                            <source
+                                src="assets/videos/6_Effect_of_the_Attention_Mask_Videos/2_generated_video_w_attn_mask.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(42, 125, 46, 0.85); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">With Attention Mask
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="container blog main gray" style="background-color: #ffffff;">
+        <h1>Emergent Abilities</h1>
+        <p class="text">
+            Beyond the standard R2V task, Saber demonstrates several interesting capabilities that emerged from its
+            training strategy, showcasing remarkable robustness and flexibility.
+        </p>
+
+        <h2>Single Subject Multiple Views</h2>
+        <p class="text">
+            Saber can handle multiple reference images corresponding to different views of the same subject. When
+            provided with front, side, and back views of a robot as reference inputs, Saber successfully recognizes
+            them as the same subject and integrates appearance features from different views into a single coherent
+            video. Despite complex surface details and intricate structures, Saber accurately captures and
+            synthesizes these visual characteristics.
+        </p>
+
+        <!-- Single Subject Multiple Views Example -->
+        <div style="margin: 3vh 0;">
+            <div
+                style="display: grid; grid-template-columns: auto 1fr; gap: 1.5vw; margin-bottom: 1vh; align-items: stretch;">
+                <!-- Left: Reference Images (3 images in a row) -->
+                <div style="display: flex; gap: 8px; align-items: flex-start;">
+                    <img src="assets/videos/7_Same_Subject_Multi_View_Videos/1_reference_image_1.png"
+                        alt="Reference Image 1"
+                        style="height: 150px; width: auto; display: block; object-fit: contain;">
+                    <img src="assets/videos/7_Same_Subject_Multi_View_Videos/1_reference_image_2.png"
+                        alt="Reference Image 2"
+                        style="height: 150px; width: auto; display: block; object-fit: contain;">
+                    <img src="assets/videos/7_Same_Subject_Multi_View_Videos/1_reference_image_3.png"
+                        alt="Reference Image 3"
+                        style="height: 150px; width: auto; display: block; object-fit: contain;">
+                </div>
+                <!-- Right: Text Prompt -->
+                <div style="display: flex;">
+                    <div style="padding: 2vh 0; display: flex; align-items: center; width: 100%;">
+                        <p style="font-size: 75%; line-height: 1.6; margin: 0;">The video opens with a slow, cinematic
+                            rotation around a robot, its body gleaming with a fusion of transparent panels and brushed
+                            metal, circuits pulsing faintly beneath the surface like living veins of light. As the
+                            rotation completes, the scene flows into motion, following the robot as it strides along
+                            lush green country lanes.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video - Spanning columns 2 and 3 in a 4-column layout -->
+            <div style="width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%);">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1vw; padding: 0 2vw;">
+                    <!-- Video occupies columns 2 and 3 -->
+                    <div style="position: relative; grid-column: 2 / 4;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 2px solid #2a7d2e; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/7_Same_Subject_Multi_View_Videos/1_generated_video.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(42, 125, 46, 0.85); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Saber (Ours)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2>Cross-Modal Alignment</h2>
+        <p class="text">
+            Saber demonstrates robust alignment between reference images and text prompts. By swapping subject
+            descriptions in prompts (e.g., clothing color or subject positions), Saber accurately reflects the
+            corresponding visual changes. This capability emerges from the interaction between video and reference
+            tokens through self-attention, followed by cross-attention with text features, enabling precise
+            reference image-text alignment.
+        </p>
+
+        <!-- Case 1: Cross-Modal Alignment Comparison -->
+        <div style="margin: 3vh 0;">
+            <div
+                style="display: grid; grid-template-columns: auto 1fr; gap: 1.5vw; margin-bottom: 1vh; align-items: stretch;">
+                <!-- Left: Reference Images (2 images in a row) -->
+                <div style="display: flex; gap: 8px; align-items: flex-start;">
+                    <img src="assets/videos/8_Cross_Modal_Alignment_Videos/1_reference_image_1.jpg"
+                        alt="Reference Image 1"
+                        style="height: 150px; width: auto; display: block; object-fit: contain;">
+                    <img src="assets/videos/8_Cross_Modal_Alignment_Videos/1_reference_image_2.jpg"
+                        alt="Reference Image 2"
+                        style="height: 150px; width: auto; display: block; object-fit: contain;">
+                </div>
+                <!-- Right: Text Prompt -->
+                <div style="display: flex;">
+                    <div style="padding: 2vh 0; display: flex; align-items: center; width: 100%;">
+                        <p style="font-size: 75%; line-height: 1.6; margin: 0;">The video depicts two men in an office
+                            environment. The focus is on a man wearing a <span
+                                style="color: #1e88e5; font-weight: 600;">[Type 1: blue shirt]</span> / <span
+                                style="color: #d32f2f; font-weight: 600;">[Type 2: black vest]</span> seated at a desk,
+                            working intently on a laptop. Another man enters the scene, walking towards the seated
+                            individual. As he approaches, he leans over the desk, engaging in conversation with the
+                            seated
+                            man.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Videos Grid - Full Screen Width -->
+            <div style="width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%);">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1vw; padding: 0 2vw;">
+                    <!-- Type 1 Video -->
+                    <div style="position: relative; grid-column: 2;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #1e88e5; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/8_Cross_Modal_Alignment_Videos/1_generated_video_type_1.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(30, 136, 229, 0.85); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Type 1: Blue Shirt
+                            </p>
+                        </div>
+                    </div>
+                    <!-- Type 2 Video -->
+                    <div style="position: relative; grid-column: 3;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #d32f2f; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/8_Cross_Modal_Alignment_Videos/1_generated_video_type_2.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(211, 47, 47, 0.85); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Type 2: Black Vest
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Case 2: Cross-Modal Alignment Comparison -->
+        <div style="margin: 3vh 0;">
+            <div
+                style="display: grid; grid-template-columns: auto 1fr; gap: 1.5vw; margin-bottom: 1vh; align-items: stretch;">
+                <!-- Left: Reference Images (2 images in a row) -->
+                <div style="display: flex; gap: 8px; align-items: flex-start;">
+                    <img src="assets/videos/8_Cross_Modal_Alignment_Videos/2_reference_image_1.jpg"
+                        alt="Reference Image 1"
+                        style="height: 150px; width: auto; display: block; object-fit: contain;">
+                    <img src="assets/videos/8_Cross_Modal_Alignment_Videos/2_reference_image_2.jpg"
+                        alt="Reference Image 2"
+                        style="height: 150px; width: auto; display: block; object-fit: contain;">
+                </div>
+                <!-- Right: Text Prompt -->
+                <div style="display: flex;">
+                    <div style="padding: 2vh 0; display: flex; align-items: center; width: 100%;">
+                        <p style="font-size: 75%; line-height: 1.6; margin: 0;">The video opens with a serene outdoor
+                            setting in a forest, featuring a green tent and two individuals seated on a log. The
+                            individuals are dressed casually, with <span style="color: #1e88e5; font-weight: 600;">[Type
+                                1: left]</span> / <span style="color: #d32f2f; font-weight: 600;">[Type 2: right]</span>
+                            person wearing a white
+                            tank top and patterned shorts, and <span style="color: #1e88e5; font-weight: 600;">[Type 1:
+                                right]</span> / <span style="color: #d32f2f; font-weight: 600;">[Type 2: left]</span>
+                            person in a plaid shirt
+                            and dark pants. They appear to be engaged in a relaxed conversation.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Videos Grid - Full Screen Width -->
+            <div style="width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%);">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1vw; padding: 0 2vw;">
+                    <!-- Type 1 Video -->
+                    <div style="position: relative; grid-column: 2;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #1e88e5; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/8_Cross_Modal_Alignment_Videos/2_generated_video_type_1.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(30, 136, 229, 0.85); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Type 1: Left - White
+                                Tank Top
+                            </p>
+                        </div>
+                    </div>
+                    <!-- Type 2 Video -->
+                    <div style="position: relative; grid-column: 3;">
+                        <video controls loop muted autoplay
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; border: 1px solid #d32f2f; border-radius: 4px; background-color: #000;">
+                            <source src="assets/videos/8_Cross_Modal_Alignment_Videos/2_generated_video_type_2.mp4"
+                                type="video/mp4">
+                        </video>
+                        <div
+                            style="position: absolute; top: 8px; left: 8px; background-color: rgba(211, 47, 47, 0.85); padding: 4px 8px; border-radius: 4px;">
+                            <p style="font-weight: 600; font-size: 85%; color: white; margin: 0;">Type 2: Right - White
+                                Tank Top
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container blog main" style="background-color: #f5f5f5;">
+        <h1>Conclusion and Limitations</h1>
+        <p class="text">
+            In this work, we present Saber, a scalable zero-shot framework for reference-to-video generation that
+            eliminates the need for explicitly R2V datasets.
+            Trained solely on large-scale video-text pairs, Saber leverages a masked training strategy, a tailored
+            attention mechanism, and mask augmentation to achieve identity-consistent, natural, and coherent video
+            generation.
+            It further scales to multiple references, supporting both multi-identity and multi-view inputs without
+            additional data preparation or changes to the training pipeline.
+            Extensive experiments on the OpenS2V-Eval benchmark demonstrate that Saber consistently outperforms methods
+            trained on explicit R2V data.
+            These results show that effective R2V models can be trained without dedicated datasets, paving the way for
+            future research in scalable and generalizable reference-to-video generation.
+        </p>
+        <p class="text">
+            While Saber achieves strong zero-shot performance and scalability, several limitations remain.
+            First, R2V generation may collapse when the number of reference images increases significantly (e.g., $12$),
+            resulting in fragmented compositions where references are combined without coherent understanding.
+            Second, Saber primarily focuses on identity preservation and visual coherence, while fine-grained motion
+            control and temporal consistency under complex prompts remain challenging.
+            Future work can explore more effective integration of numerous reference images into unified video
+            generation, as well as adaptive guidance to further improve controllability and realism in
+            reference-to-video generation.
+        </p>
+    </div>
+
+    <div class="container blog main gray" style="background-color: #ffffff;">
+        <h1>Citation</h1>
+        <p class="text">
+            If you find Saber useful for your research, please cite our paper:
+        </p>
+        <pre><code class="plaintext">@article{zhou2025saber,
+    title={Saber: Scaling Zero-Shot Reference-to-Video Generation},
+    author={Zhou, Zijian and Liu, Shikun and Liu, Haozhe and Qiu, Haonan and An, Zhaochong and Ren, Weiming and Liu, Zhiheng and Huang, Xiaoke and Ng, Kam Woh and Xie, Tian and Han, Xiao and Cong, Yuren and Li, Hang and Zhu, Chuyan and Patel, Aditya and Xiang, Tao and He, Sen},
+    journal={arXiv preprint},
+    year={2025}
+}</code></pre>
+    </div>
+
+    <!-- Footer Page -->
+    <footer>
+        <div class="container">
+            <p>
+                This website is built on the <a href="https://shikun.io/projects/clarity">Clarity Template</a>,
+                designed
+                by <a href="https://shikun.io/">Shikun Liu</a>.
+            </p>
+        </div>
+    </footer>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="clarity/clarity.js"></script>
+    <script src="assets/scripts/main.js"></script>
+
+</html>
+</body>
