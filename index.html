@@ -105,8 +105,8 @@
             text-shadow: 2px 2px 12px rgba(0, 0, 0, 0.8), 4px 4px 20px rgba(0, 0, 0, 0.6);
             letter-spacing: -0.5px;
             line-height: 1.2;
-            white-space: nowrap;
-            overflow: visible;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         /* Custom styles for author */
@@ -117,6 +117,8 @@
             margin-bottom: 0.5vh !important;
             color: #e0e0e0;
             text-shadow: 1px 1px 8px rgba(0, 0, 0, 0.8), 2px 2px 12px rgba(0, 0, 0, 0.6);
+            text-wrap: balance;
+            -webkit-text-wrap: balance;
         }
 
         div.container.blog#first-content div.blog-title .blog-intro p.author a {
@@ -125,6 +127,18 @@
             color: #e0e0e0;
             transition: color 0.3s ease;
             text-shadow: inherit;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        div.container.blog#first-content div.blog-title .blog-intro p.author sup {
+            white-space: nowrap;
+        }
+
+        /* Make each author item (name + superscript + comma) unbreakable */
+        div.container.blog#first-content div.blog-title .blog-intro p.author .author-item {
+            white-space: nowrap;
+            display: inline-block;
         }
 
         div.container.blog#first-content div.blog-title .blog-intro p.author a:hover {
@@ -265,6 +279,219 @@
             word-break: break-word;
             padding: 0.5vh 0 !important;
         }
+
+        /* ============================================ */
+        /* RESPONSIVE DESIGN FOR MOBILE DEVICES */
+        /* ============================================ */
+
+        @media screen and (max-width: 768px) {
+
+            /* Fix title wrapping on mobile */
+            div.container.blog#first-content div.blog-title.no-cover h1.title {
+                font-size: 28px !important;
+                white-space: normal !important;
+                line-height: 1.3 !important;
+                padding-bottom: 1vh !important;
+            }
+
+            /* Adjust blog intro padding on mobile */
+            div.container.blog#first-content .blog-title .blog-intro {
+                width: 90vw !important;
+                padding: 3vh 4vw !important;
+            }
+
+            /* Adjust author font size on mobile */
+            div.container.blog#first-content div.blog-title .blog-intro p.author {
+                font-size: 65% !important;
+                line-height: 1.6 !important;
+            }
+
+            /* Adjust abstract font size on mobile */
+            div.container.blog#first-content div.blog-title .blog-intro p.abstract {
+                font-size: 72% !important;
+            }
+
+            /* Improved button layout on mobile - fixed size, centered */
+            div.container.blog#first-content div.blog-title .blog-intro .info {
+                display: flex;
+                justify-content: center;
+            }
+
+            div.container.blog#first-content div.blog-title .blog-intro .info>div {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                justify-content: center;
+                align-items: stretch;
+                max-width: 400px;
+            }
+
+            div.container.blog#first-content div.blog-title .blog-intro .info .button {
+                flex: 0 0 auto;
+                min-width: 100px;
+                max-width: 140px;
+                height: 44px;
+                padding: 0 16px;
+                text-align: center;
+                font-size: 90%;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                line-height: 1.2;
+                white-space: nowrap;
+            }
+
+            div.container.blog#first-content div.blog-title .blog-intro .info .button i {
+                margin-left: 6px;
+            }
+
+            /* Adjust section headings on mobile */
+            div.container.blog.main.first h1,
+            div.container.blog.main#method-section h1,
+            div.container.blog.main:not(.first):not(#method-section) h1 {
+                font-size: 24px !important;
+            }
+
+            div.container.blog.main#method-section h2,
+            div.container.blog.main:not(.first):not(#method-section) h2 {
+                font-size: 18px !important;
+            }
+
+            /* Stack Method section grid on mobile */
+            div.container.blog.main#method-section>div[style*="display: grid"] {
+                display: block !important;
+            }
+
+            div.container.blog.main#method-section>div[style*="display: grid"]>div {
+                margin-bottom: 2vh;
+            }
+
+            /* Fix reference images on mobile */
+            div[style*="display: grid; grid-template-columns: auto 1fr"] {
+                display: block !important;
+            }
+
+            div[style*="display: flex; gap: 8px"] img {
+                height: 100px !important;
+                max-width: 30% !important;
+                object-fit: contain;
+            }
+
+            div>img[style*="height: 150px"] {
+                height: 120px !important;
+                width: auto !important;
+            }
+
+            div>img[style*="height: 100px"] {
+                height: 80px !important;
+                width: auto !important;
+            }
+
+            /* Stack videos vertically on mobile instead of grid */
+            div[style*="width: 100vw"] {
+                width: 100% !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+            }
+
+            div[style*="grid-template-columns: repeat(4, 1fr)"] {
+                display: flex !important;
+                flex-direction: column !important;
+                padding: 0 4vw !important;
+                gap: 2vh !important;
+            }
+
+            /* Ensure videos take full width on mobile */
+            div[style*="grid-template-columns: repeat(4, 1fr)"]>div {
+                grid-column: auto !important;
+                width: 100% !important;
+            }
+
+            div[style*="grid-template-columns: repeat(4, 1fr)"] video {
+                width: 100% !important;
+            }
+
+            /* Adjust text prompts padding on mobile */
+            div[style*="padding: 2vh 0"] p {
+                font-size: 80% !important;
+                padding: 1vh 0 !important;
+            }
+
+            /* Adjust caption text on mobile */
+            p.caption {
+                font-size: 75% !important;
+            }
+
+            /* Fix background video on mobile */
+            div.container.blog#first-content {
+                min-height: 100vh !important;
+            }
+
+            div.container.blog#first-content .blog-title {
+                padding: 3vh 0vw !important;
+            }
+        }
+
+        /* Footer styles - match body text size and center content */
+        footer {
+            font-size: 16px !important;
+            text-align: center !important;
+        }
+
+        footer p {
+            font-size: 16px !important;
+            line-height: 1.6 !important;
+            text-align: center !important;
+        }
+
+        footer .container {
+            font-size: 16px !important;
+            text-align: center !important;
+        }
+
+        footer .container p {
+            font-size: 16px !important;
+            text-align: center !important;
+        }
+
+        footer a {
+            font-size: 16px !important;
+        }
+
+        /* Additional fixes for very small screens */
+        @media screen and (max-width: 480px) {
+            div.container.blog#first-content div.blog-title.no-cover h1.title {
+                font-size: 22px !important;
+            }
+
+            div.container.blog#first-content div.blog-title .blog-intro p.author {
+                font-size: 60% !important;
+            }
+
+            div.container.blog#first-content div.blog-title .blog-intro p.abstract {
+                font-size: 68% !important;
+            }
+
+            div.container.blog.main.first h1,
+            div.container.blog.main#method-section h1,
+            div.container.blog.main:not(.first):not(#method-section) h1 {
+                font-size: 20px !important;
+            }
+
+            div.container.blog.main#method-section h2,
+            div.container.blog.main:not(.first):not(#method-section) h2 {
+                font-size: 16px !important;
+            }
+
+            /* Make reference images even smaller on very small screens */
+            div[style*="display: flex; gap: 8px"] img {
+                height: 80px !important;
+            }
+
+            div>img[style*="height: 150px"] {
+                height: 100px !important;
+            }
+        }
     </style>
 </head>
 
@@ -283,24 +510,29 @@
                 <div>
                     <h1 class="title">Scaling Zero-Shot Reference-to-Video Generation</h1>
                     <p class="author">
-                        <a href="https://sites.google.com/view/zijian-zhou/home">Zijian Zhou</a><sup>1,2</sup>, <a
-                            href="https://shikun.io">Shikun Liu</a><sup>1</sup>, <a
-                            href="https://haozheliu-st.github.io">Haozhe Liu</a><sup>1</sup>, <a
-                            href="http://haonanqiu.com">Haonan
-                            Qiu</a><sup>1</sup>, <a href="https://zhaochongan.github.io">Zhaochong An</a><sup>1</sup>,
-                        <a href="https://cs.uwaterloo.ca/~w2ren/">Weiming
-                            Ren</a><sup>1</sup>, <a href="https://johanan528.github.io">Zhiheng Liu</a><sup>1</sup>,
-                        <a href="https://xk-huang.github.io">Xiaoke Huang</a><sup>1</sup>,<br>
-                        <a href="https://kamwoh.github.io">Kam Woh Ng</a><sup>1</sup>, <a
-                            href="https://scholar.google.com/citations?user=wKjXhH8AAAAJ">Tian Xie</a><sup>1</sup>, <a
-                            href="https://brandonhan.uk">Xiao
-                            Han</a><sup>1</sup>, <a href="https://yrcong.github.io">Yuren Cong</a><sup>1</sup>, <a
-                            href="https://hangligit.github.io">Hang
-                            Li</a><sup>1</sup>, <a href="https://www.linkedin.com/in/chuyan-nicole-zhu/">Chuyan
-                            Zhu</a><sup>1</sup>, <a href="https://www.linkedin.com/in/adityapatel1/">Aditya
-                            Patel</a><sup>1</sup>, <a href="https://scholar.google.com/citations?user=MeS5d4gAAAAJ">Tao
-                            Xiang</a><sup>1</sup>, <a href="https://senhe.github.io">Sen
-                            He</a><sup>1</sup>
+                        <span class="author-item"><a href="https://sites.google.com/view/zijian-zhou/home">Zijian
+                                Zhou<sup>1,2</sup></a>,</span> <span class="author-item"><a
+                                href="https://shikun.io">Shikun Liu<sup>1</sup></a>,</span> <span class="author-item"><a
+                                href="https://haozheliu-st.github.io">Haozhe Liu<sup>1</sup></a>,</span> <span
+                            class="author-item"><a href="http://haonanqiu.com">Haonan Qiu<sup>1</sup></a>,</span> <span
+                            class="author-item"><a href="https://zhaochongan.github.io">Zhaochong
+                                An<sup>1</sup></a>,</span> <span class="author-item"><a
+                                href="https://cs.uwaterloo.ca/~w2ren/">Weiming Ren<sup>1</sup></a>,</span> <span
+                            class="author-item"><a href="https://johanan528.github.io">Zhiheng
+                                Liu<sup>1</sup></a>,</span> <span class="author-item"><a
+                                href="https://xk-huang.github.io">Xiaoke Huang<sup>1</sup></a>,</span> <span
+                            class="author-item"><a href="https://kamwoh.github.io">Kam Woh Ng<sup>1</sup></a>,</span>
+                        <span class="author-item"><a href="https://scholar.google.com/citations?user=wKjXhH8AAAAJ">Tian
+                                Xie<sup>1</sup></a>,</span> <span class="author-item"><a
+                                href="https://brandonhan.uk">Xiao Han<sup>1</sup></a>,</span> <span
+                            class="author-item"><a href="https://yrcong.github.io">Yuren Cong<sup>1</sup></a>,</span>
+                        <span class="author-item"><a href="https://hangligit.github.io">Hang Li<sup>1</sup></a>,</span>
+                        <span class="author-item"><a href="https://www.linkedin.com/in/chuyan-nicole-zhu/">Chuyan
+                                Zhu<sup>1</sup></a>,</span> <span class="author-item"><a
+                                href="https://www.linkedin.com/in/adityapatel1/">Aditya Patel<sup>1</sup></a>,</span>
+                        <span class="author-item"><a href="https://scholar.google.com/citations?user=MeS5d4gAAAAJ">Tao
+                                Xiang<sup>1</sup></a>,</span> <span class="author-item"><a
+                                href="https://senhe.github.io">Sen He<sup>1</sup></a></span>
                     </p>
                     <p class="author" style="padding-top: 0px;">
                         <sup>1</sup> Meta AI &nbsp;&nbsp;&nbsp; <sup>2</sup> King's College London
@@ -309,15 +541,9 @@
                     <!-- Using FontAwesome Free -->
                     <div class="info">
                         <div>
-                            <a href="https://arxiv.org" class="button icon"> Paper <i
-                                    class="fa-solid fa-book-open"></i></a> &nbsp;&nbsp;
+                            <a href="https://arxiv.org" class="button icon">Paper <i
+                                    class="fa-solid fa-book-open"></i></a>
                             <a href="https://github.com" class="button icon">Code <i class="fa-solid fa-code"></i></a>
-                            &nbsp;&nbsp;
-                            <a href="https://www.microsoft.com/en-gb/microsoft-365/powerpoint"
-                                class="button icon">Slides <i class="fa-regular fa-file-powerpoint"></i></a>
-                            &nbsp;&nbsp;
-                            <a href="https://huggingface.co/spaces/" class="button icon">Demo <i
-                                    class="fa-solid fa-laptop-code"></i></a>
                         </div>
                     </div>
                 </div>
