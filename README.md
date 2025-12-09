@@ -4,6 +4,10 @@ Zijian Zhou<sup>1,2</sup>, Shikun Liu<sup>1</sup>, Haozhe Liu<sup>1</sup>, Haona
 
 <sup>1</sup> Meta AI &nbsp;&nbsp;&nbsp; <sup>2</sup> King's College London
 
+
+**The training and inference code will be released once it has been organized. Please stay tuned.**
+
+
 ## Project Overview
 
 **Saber** is a scalable zero-shot framework for reference-to-video (R2V) generation. By introducing a masked training strategy, Saber bypasses the bottleneck of explicit reference image-video-text triplet datasets, training exclusively on video-text pairs to achieve zero-shot generation capabilities without explicit R2V data.
