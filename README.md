@@ -20,7 +20,7 @@ If you find Saber useful for your research, please cite our paper:
 @article{zhou2025scaling,
     title={Scaling Zero-Shot Reference-to-Video Generation},
     author={Zhou, Zijian and Liu, Shikun and Liu, Haozhe and Qiu, Haonan and An, Zhaochong and Ren, Weiming and Liu, Zhiheng and Huang, Xiaoke and Ng, Kam Woh and Xie, Tian and Han, Xiao and Cong, Yuren and Li, Hang and Zhu, Chuyan and Patel, Aditya and Xiang, Tao and He, Sen},
-    journal={arXiv preprint},
+    journal={arXiv preprint arXiv:2512.06905},
     year={2025}
 }
 ```
